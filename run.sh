@@ -68,6 +68,8 @@ main() {
   cd "${XDS_K8S_DRIVER_DIR}"
   ensure_venv
 
+  export CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE="false"
+
   # Split path to python file from the rest of the args.
   local py_file="$1"
   shift
