@@ -1289,8 +1289,7 @@ test_driver_install() {
 kokoro_print_version() {
   psm::tools::log "Kokoro Ubuntu version:"
   run_ignore_exit_code lsb_release -a
-  run_ignore_exit_code uv --version
-  run_ignore_exit_code uv run --python "${PYTHON_VERSION}" python --version
+
 }
 
 #######################################
@@ -1365,8 +1364,11 @@ kokoro_install_dependencies() {
     parallel \
     curl
   sudo rm -rf /var/lib/apt/lists
-  curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
+  curl -LsSf https://astral.sh/uv/install.sh | sudo env UV_INSTALL_DIR="/usr/local/bin" sh
   uv python install "${PYTHON_VERSION}"
+  psm::tools::log "uv version:"
+  uv --version
+  uv run --python "${PYTHON_VERSION}" python --version
 }
 
 #######################################
