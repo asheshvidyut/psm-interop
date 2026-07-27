@@ -33,7 +33,7 @@ readonly TEST_DRIVER_PATH=""
 readonly TEST_DRIVER_PROTOS_PATH="protos/grpc/testing"
 
 # --- Injectable constants ---
-readonly PYTHON_VERSION="${PYTHON_VERSION:-3.10}"
+readonly PYTHON_VERSION="${PYTHON_VERSION:-3.14}"
 
 # Test driver
 readonly TEST_DRIVER_REPO_OWNER="${TEST_DRIVER_REPO_OWNER:-grpc}"
@@ -1205,7 +1205,7 @@ test_driver_pip_install() {
       psm::tools::log "Found python virtual environment directory: ${venv_dir}"
     else
       psm::tools::log "Creating python virtual environment: ${venv_dir}"
-      "python${PYTHON_VERSION}" -m venv "${venv_dir}" --upgrade-deps
+      uv venv --python "${PYTHON_VERSION}" --seed "${venv_dir}"
     fi
     # Intentional: No need to check python venv activate script.
     # shellcheck source=/dev/null
@@ -1289,8 +1289,8 @@ test_driver_install() {
 kokoro_print_version() {
   psm::tools::log "Kokoro Ubuntu version:"
   run_ignore_exit_code lsb_release -a
-  run_ignore_exit_code "python${PYTHON_VERSION}" --version
-  run_ignore_exit_code "python${PYTHON_VERSION}" -m pip --version
+  run_ignore_exit_code uv --version
+  run_ignore_exit_code uv run --python "${PYTHON_VERSION}" python --version
 }
 
 #######################################
@@ -1360,11 +1360,13 @@ kokoro_install_dependencies() {
   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq remove needrestart
   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq update
   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install --auto-remove \
-    "python${PYTHON_VERSION}-venv" \
     google-cloud-sdk-gke-gcloud-auth-plugin \
     kubectl \
-    parallel
+    parallel \
+    curl
   sudo rm -rf /var/lib/apt/lists
+  curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh
+  uv python install "${PYTHON_VERSION}"
 }
 
 #######################################

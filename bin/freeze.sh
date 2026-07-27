@@ -16,13 +16,5 @@
 
 set -exo pipefail
 
-VENV_NAME="venv-$(mktemp -d)"
-readonly VENV_NAME
-
-python3 -m virtualenv "${VENV_NAME}"
-
-"${VENV_NAME}"/bin/pip install -r requirements.txt
-"${VENV_NAME}"/bin/pip freeze --require-virtualenv --local -r requirements.txt \
-  > requirements.lock
-
-rm -rf "${VENV_NAME}"
+# Make sure uv is installed: curl -LsSf https://astral.sh/uv/install.sh | sh
+uv pip compile requirements.txt --python-version 3.14 -o requirements.lock
