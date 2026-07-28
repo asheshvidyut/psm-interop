@@ -1364,7 +1364,7 @@ kokoro_install_dependencies() {
     parallel \
     curl
   sudo rm -rf /var/lib/apt/lists
-  curl -LsSf https://astral.sh/uv/install.sh | sudo env UV_INSTALL_DIR="/usr/local/bin" sh
+  pip install --user uv
   uv python install "${PYTHON_VERSION}"
   psm::tools::log "uv version:"
   uv --version
