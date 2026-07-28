@@ -1364,7 +1364,7 @@ kokoro_install_dependencies() {
     parallel \
     curl
   sudo rm -rf /var/lib/apt/lists
-  python3 -m pip install --user uv
+  sudo python3 -m pip install uv
   uv python install "${PYTHON_VERSION}"
   psm::tools::log "uv version:"
   uv --version
