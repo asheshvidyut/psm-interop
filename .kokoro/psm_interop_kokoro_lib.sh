@@ -1361,8 +1361,7 @@ kokoro_install_dependencies() {
   sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install --auto-remove \
     google-cloud-sdk-gke-gcloud-auth-plugin \
     kubectl \
-    parallel \
-    curl
+    parallel
   sudo rm -rf /var/lib/apt/lists
   sudo python3 -m pip install uv
   uv python install "${PYTHON_VERSION}"
