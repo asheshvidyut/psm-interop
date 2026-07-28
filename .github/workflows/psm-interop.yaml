@@ -65,6 +65,7 @@ jobs:
         - uses: psf/black@stable
           with:
              options: "--check --verbose"
+             version: "23.3.0"
 
   isort-check:
     runs-on: ubuntu-latest
