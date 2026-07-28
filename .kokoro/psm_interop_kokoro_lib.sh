@@ -1212,14 +1212,14 @@ test_driver_pip_install() {
     source "${venv_dir}/bin/activate"
   fi
 
-  psm::tools::log "Installing Python packages with pip, see install-pip.log"
+  psm::tools::log "Installing Python packages with uv pip, see install-pip.log"
   psm::driver::pip_install &>> "${BUILD_LOGS_ROOT}/install-pip.log"
 }
 
 psm::driver::pip_install() {
-  psm::tools::run_verbose python3 -m pip install -r requirements.lock
+  psm::tools::run_verbose uv pip install -r requirements.lock
   echo
-  psm::tools::run_verbose python3 -m pip list
+  psm::tools::run_verbose uv pip list
 }
 
 #######################################
@@ -1246,7 +1246,7 @@ test_driver_compile_protos() {
   )
   psm::tools::log "Generate python code from grpc.testing protos: ${protos[*]}"
   cd "${TEST_DRIVER_REPO_DIR}"
-  python3 -m grpc_tools.protoc \
+  python -m grpc_tools.protoc \
     --proto_path=. \
     --python_out="${TEST_DRIVER_FULL_DIR}" \
     --grpc_python_out="${TEST_DRIVER_FULL_DIR}" \
@@ -1364,7 +1364,7 @@ kokoro_install_dependencies() {
     parallel \
     curl
   sudo rm -rf /var/lib/apt/lists
-  pip install --user uv
+  python3 -m pip install --user uv
   uv python install "${PYTHON_VERSION}"
   psm::tools::log "uv version:"
   uv --version
