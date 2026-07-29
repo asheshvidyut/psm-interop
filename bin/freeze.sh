@@ -17,4 +17,4 @@
 set -exo pipefail
 
 # Make sure uv is installed: curl -LsSf https://astral.sh/uv/install.sh | sh
-uv pip compile requirements.txt --python-version 3.14 -o requirements.lock
+uv pip compile requirements.txt --python-version 3.11 -o requirements.lock
