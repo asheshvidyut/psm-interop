@@ -33,7 +33,7 @@ readonly TEST_DRIVER_PATH=""
 readonly TEST_DRIVER_PROTOS_PATH="protos/grpc/testing"
 
 # --- Injectable constants ---
-readonly PYTHON_VERSION="${PYTHON_VERSION:-3.14}"
+readonly PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
 
 # Test driver
 readonly TEST_DRIVER_REPO_OWNER="${TEST_DRIVER_REPO_OWNER:-grpc}"
