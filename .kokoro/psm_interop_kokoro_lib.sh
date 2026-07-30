@@ -1289,7 +1289,9 @@ test_driver_install() {
 kokoro_print_version() {
   psm::tools::log "Kokoro Ubuntu version:"
   run_ignore_exit_code lsb_release -a
-
+  psm::tools::log "This is System Python version and may be different from actual running version"
+  run_ignore_exit_code "python${PYTHON_VERSION}" --version
+  run_ignore_exit_code "python${PYTHON_VERSION}" -m pip --version
 }
 
 #######################################
