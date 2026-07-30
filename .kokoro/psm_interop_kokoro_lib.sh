@@ -1195,6 +1195,9 @@ test_driver_get_source() {
 #   Writes the list of installed modules to stdout
 #######################################
 test_driver_pip_install() {
+  psm::tools::log "uv version:"
+  uv --version
+  uv run --python "${PYTHON_VERSION}" python --version
   psm::tools::log "Install python dependencies"
   cd "${TEST_DRIVER_FULL_DIR}"
 
