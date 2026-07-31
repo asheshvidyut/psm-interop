@@ -121,7 +121,8 @@ disable=
 	unsubscriptable-object,
 	# NOTE(sergiitk): yapf compatibility, ref #25071
 	bad-continuation,
-	# TODO: Clean up the following suppressions and fix them in code later
+	# TODO(asheshvidyut): Clean up the following suppressions and fix them in code later
+	# b/541074445
 	unknown-option-value,
 	useless-option-value,
 	use-dict-literal,
