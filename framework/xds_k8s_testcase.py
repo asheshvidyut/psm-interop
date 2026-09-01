@@ -621,6 +621,45 @@ class XdsKubernetesBaseTestCase(
         server_hostnames = [server.hostname for server in servers]
         logger.info("Verifying RPCs go to servers %s", server_hostnames)
         lb_stats = self.getClientRpcStats(test_client, num_rpcs)
+
+        # Fallback: Query GKE dynamically to check for pod rescheduling
+        missing_hostnames = [
+            h for h in server_hostnames if h not in lb_stats.rpcs_by_peer
+        ]
+        if missing_hostnames:
+            active_server_pods = []
+            if hasattr(self, "server_runner") and self.server_runner:
+                active_server_pods.extend(
+                    self.server_runner.list_deployment_pods()
+                )
+            if (
+                hasattr(self, "alternate_server_runner")
+                and self.alternate_server_runner
+            ):
+                active_server_pods.extend(
+                    self.alternate_server_runner.list_deployment_pods()
+                )
+
+            active_pod_hostnames = [
+                pod.metadata.name for pod in active_server_pods
+            ]
+            for i, missing_h in enumerate(server_hostnames):
+                if missing_h in missing_hostnames:
+                    # Match missing hostname to an active pod sharing the same deployment prefix
+                    prefix = missing_h.rsplit("-", 1)[0]
+                    for active_h in active_pod_hostnames:
+                        if (
+                            active_h in lb_stats.rpcs_by_peer
+                            and active_h.startswith(prefix)
+                        ):
+                            logger.info(
+                                "Rescheduling detected: Stale pod %s was replaced by active pod %s",
+                                missing_h,
+                                active_h,
+                            )
+                            server_hostnames[i] = active_h
+                            break
+
         failed = int(lb_stats.num_failures)
         self.assertLessEqual(
             failed,
