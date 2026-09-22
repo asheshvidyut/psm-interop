@@ -535,7 +535,7 @@ class KubernetesNamespace:  # pylint: disable=too-many-public-methods
         # 401 Unauthorized: token might be expired, attempt auth refresh.
         if code == 401:
             self._refresh_auth()
-            return _quick_recovery_retryer()
+            return _server_restart_retryer()
 
         # 404 Not Found. Make it easier for the caller to handle 404s.
         if code == 404:

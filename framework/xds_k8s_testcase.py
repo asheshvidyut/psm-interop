@@ -621,6 +621,45 @@ class XdsKubernetesBaseTestCase(
         server_hostnames = [server.hostname for server in servers]
         logger.info("Verifying RPCs go to servers %s", server_hostnames)
         lb_stats = self.getClientRpcStats(test_client, num_rpcs)
+
+        # Fallback: Query GKE dynamically to check for pod rescheduling
+        missing_hostnames = [
+            h for h in server_hostnames if h not in lb_stats.rpcs_by_peer
+        ]
+        if missing_hostnames:
+            active_server_pods = []
+            if hasattr(self, "server_runner") and self.server_runner:
+                active_server_pods.extend(
+                    self.server_runner.list_deployment_pods()
+                )
+            if (
+                hasattr(self, "alternate_server_runner")
+                and self.alternate_server_runner
+            ):
+                active_server_pods.extend(
+                    self.alternate_server_runner.list_deployment_pods()
+                )
+
+            active_pod_hostnames = [
+                pod.metadata.name for pod in active_server_pods
+            ]
+            for i, missing_h in enumerate(server_hostnames):
+                if missing_h in missing_hostnames:
+                    # Match missing hostname to an active pod sharing the same deployment prefix
+                    prefix = missing_h.rsplit("-", 1)[0]
+                    for active_h in active_pod_hostnames:
+                        if (
+                            active_h in lb_stats.rpcs_by_peer
+                            and active_h.startswith(prefix)
+                        ):
+                            logger.info(
+                                "Rescheduling detected: Stale pod %s was replaced by active pod %s",
+                                missing_h,
+                                active_h,
+                            )
+                            server_hostnames[i] = active_h
+                            break
+
         failed = int(lb_stats.num_failures)
         self.assertLessEqual(
             failed,
@@ -743,6 +782,54 @@ class XdsKubernetesBaseTestCase(
         except retryers.RetryError:
             self.fail(
                 f"Timeout waiting for RDS to update to cluster {expected_cluster_name}"
+            )
+
+    def assertCdsCircuitBreakerRequestsLimit(
+        self,
+        test_client: XdsTestClient,
+        backend_service_name: str,
+        expected_max_requests: int,
+        *,
+        retry_timeout: datetime.timedelta = datetime.timedelta(minutes=5),
+        retry_wait: datetime.timedelta = datetime.timedelta(seconds=5),
+    ) -> None:
+        logger.info(
+            "Waiting for CDS update to backend service %s to have maxRequests %d",
+            backend_service_name,
+            expected_max_requests,
+        )
+
+        def _check_config() -> bool:
+            config = test_client.csds.fetch_client_status_parsed()
+            if not config or not config.cds:
+                return False
+
+            for cluster in config.cds:
+                cluster_name = cluster.get("name", "")
+                alt_stat_name = cluster.get("altStatName", "")
+                if (
+                    backend_service_name in cluster_name
+                    or backend_service_name in alt_stat_name
+                ):
+                    cb = cluster.get("circuitBreakers", {})
+                    thresholds = cb.get("thresholds", [])
+                    if thresholds:
+                        max_requests = thresholds[0].get("maxRequests")
+                        if max_requests == expected_max_requests:
+                            return True
+            return False
+
+        retryer = retryers.constant_retryer(
+            wait_fixed=retry_wait,
+            timeout=retry_timeout,
+        )
+
+        try:
+            retryer(_check_config)
+        except retryers.RetryError:
+            self.fail(
+                f"Timeout waiting for CDS of {backend_service_name} "
+                f"to update to maxRequests={expected_max_requests}"
             )
 
     def assertRouteConfigUpdateTrafficHandoff(
